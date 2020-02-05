@@ -67,8 +67,7 @@ a:visited {
 
 </div>
 </div>
-</form>';
-</html>
+</form>
 <?php
   
 
@@ -138,6 +137,12 @@ define("ERR_MUSTCOMMENT", "You must add a comment. Try typing something.");
 define("ERR_TOOLONG", "Your comment is too long. Try and summarise it.");
 define("ERR_FULLTHREAD", "The thread you have replied to has reached the maximum number of posts.");
 define("ERR_ADMINOPONLY", "Sorry, only the administrator can create new threads at the moment.");
+
+function posthash($tp){
+    $threadid = $tp['thread']?$tp['thread']:$tp['id'];
+    $identity = $tp['ip']."\x1f".$threadid."\x1f".SECRETKEY;
+    return substr(hash("sha256", $identity),-8);
+}
 
 function mktripcode($pw){
     /* this function is Copyright (C) avimedia, licensed under the GPLv3
@@ -243,7 +248,6 @@ function num_posts($parent){
 
 function postexists($id){
 	foreach(getposts() as $p){
-        print "id is " . $p['id'];
 		if($p['id'] == $id){
             return 1;
 		}
@@ -384,7 +388,7 @@ function can_post($ip){
 function old_style_text($tp){
     $time = date("y/m/d (D) H:i", $tp['time']);
     return '<input type=checkbox name="del[]" value="'.$tp['id'].'"><font color="#cc1105"><b>'.$tp['subject'].'</b></font>
-Name <font color="#117743"><b '.($tp['admin'] ? 'class="adminpost"' : '').'>'.$tp['name'].' </b></font> '.$time.' IP:'.$tp['ip'].' No.<a href="javascript:void(0);" onclick="javascript:quote('.$tp['id'].');">'.$tp['id'].'</a>';
+Name <font color="#117743"><b '.($tp['admin'] ? 'class="adminpost"' : '').'>'.$tp['name'].' </b></font> '.$time.' ID:'.posthash($tp).' No.<a href="javascript:void(0);" onclick="javascript:quote('.$tp['id'].');">'.$tp['id'].'</a>';
 }
 
 function old_style_image($tp){
@@ -515,7 +519,7 @@ function postform($op){
         if(!ADMINOPONLY || $op > 0){
     if(!LOCKED){
         if(num_posts($op) < MAXREPLIES){
-        $r .= '<form action="post.php?mode=post" method="POST" enctype="multipart/form-data">';
+        $r .= '<form action="'.URLROOT.SCRIPTNAME.'?mode=post" method="POST" enctype="multipart/form-data">';
 
         $r .= '<input type="hidden" name="thread" value="'.$op.'">';
     
@@ -703,7 +707,7 @@ function writeposts($posts){
             $l .= "\x1e";
         }
     }
-    file_put_contents(POSTSFILE, $l);
+    file_put_contents(POSTSFILE, $l, LOCK_EX);
 
 }
 
@@ -895,7 +899,6 @@ if(isset($_GET['mode'])){
 			$tidi = intval($_POST['thread']);
 			if($tidi == 0) { $op = 0; }
 			else {
-                print "postexists(tidi) is " . postexists($tidi);
 				if(postexists($tidi)) { $op = $tidi; }
 				else { abort_error(ERR_NOTFOUND); }
 			}
@@ -1117,16 +1120,19 @@ if(isset($_GET['mode'])){
         
 		insertpost($pinf);
         
-        echo '<!doctype html><html><head>';
         if($pinf['email'] == "noko"){
-            echo '<meta http-equiv="refresh" content="2; url='.URLROOT.THREADDIR.$pinf['id'].'.html"></head><body>';
+	    if($op>0) {
+                echo '<meta http-equiv="refresh" content="2; url='.URLROOT.THREADDIR.$op.'.html#p'.$pinf['id'].'">';
+            } else {
+                echo '<meta http-equiv="refresh" content="2; url='.URLROOT.THREADDIR.$pinf['id'].'.html">';
+            }
             if($pinf['src'] != ""){
                 echo '<h2>'.$pinf['file'].' uploaded. Redirecting to the thread.';
             } else {
                 echo '<h2>Comment posted. Redirecting to the thread.</h2>';
             }
         } else {
-            echo '<meta http-equiv="refresh" content="2; url=".URLROOT."0.html"></head><body>';
+            echo '<meta http-equiv="refresh" content="2; url='.URLROOT.'0.html">';
             if($pinf['src'] != ""){
                 echo '<h2>'.$pinf['file'].' uploaded.';
             } else {
@@ -1136,3 +1142,4 @@ if(isset($_GET['mode'])){
     }
 }
 ?>
+</html>
