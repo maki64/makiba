@@ -137,6 +137,8 @@ define("ERR_MUSTCOMMENT", "You must add a comment. Try typing something.");
 define("ERR_TOOLONG", "Your comment is too long. Try and summarise it.");
 define("ERR_FULLTHREAD", "The thread you have replied to has reached the maximum number of posts.");
 define("ERR_ADMINOPONLY", "Sorry, only the administrator can create new threads at the moment.");
+define("ERR_NODELKEY", "You need a deletion key to delete posts.");
+define("ERR_NODELS", "You have to check posts to delete.");
 
 function posthash($tp){
     $threadid = $tp['thread']?$tp['thread']:$tp['id'];
@@ -525,7 +527,7 @@ function postform($op){
     
         $r .= '<div id="pb"><table><tr><td class="fl"><b>Name</b></td><td><input type=text name=name size="28"></td></tr>
 <tr><td class="fl"><b>E-mail</b></td><td><input type=text name=email size="28"></td></tr>
-<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="返信する"></td></tr>
+<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="'.($op>0?'返信する':'スレッドを立てる').'"></td></tr>
 <tr><td class="fl"><b>Comment</b></td><td><textarea id="com" name=comment cols="48" rows="4" id="ftxa"></textarea></td></tr>
 <tr><td class="fl"><b>添付File</b></td><td><input type=file name=img size="35">';
         if(ALLOWNOIMAGEOP){
@@ -908,14 +910,14 @@ if(isset($_GET['mode'])){
 		if(isset($_POST['name']) && trim($_POST['name']) != ""){
             $_POST['name'] = trim($_POST['name']);
             if(!strstr($_POST['name'], '#')){
-                $pinf['name'] = clean($_POST['name']);
+                $pinf['name'] = preg_replace('/![.-9A-Za-z]+$/', '!', clean($_POST['name']));;
             } else {
                 $parts = explode('#', $_POST['name']);
-                $n = $parts[0];
+                $n = preg_replace('/!+$/', '', clean($parts[0]));
                 array_shift($parts);
                 $t = implode('', $parts);
                 $g = mktripcode($t);
-                $pinf['name'] = clean($n) . '!' . $g;
+                $pinf['name'] = $n . '!' . $g;
                 if(strcmp($g, ADMINTRIP) == 0){
                     $ad = 1;
                 }
