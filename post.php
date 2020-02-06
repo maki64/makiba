@@ -59,7 +59,7 @@ a:visited {
 </style>
 <hr width="90%" size=1><form action="post.php?mode=post" method="POST" enctype="multipart/form-data"><input type="hidden" name="thread" value="0"><div id="pb"><table><tr><td class="fl"><b>Name</b></td><td><input type=text name=name size="28"></td></tr>
 <tr><td class="fl"><b>E-mail</b></td><td><input type=text name=email size="28"></td></tr>
-<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="スレッドを立てる" onClick="ptfk(0)"></td></tr>
+<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="スレッドを立てる"></td></tr>
 <tr><td class="fl"><b>Comment</b></td><td><textarea id="com" name=comment cols="48" rows="4" id="ftxa"></textarea></td></tr>
 <tr><td class="fl"><b>File</b></td><td><input type=file name=img size="35">[<label><input type=checkbox name="noimage" value="y">No image</label>]</td></tr><tr><td class="fl"><b>Key</b></td><td><input type=password name=key size=8 maxlength=12 ></td></tr>
 </table>
@@ -401,7 +401,7 @@ function old_style_image($tp){
         $tp['src'] = URLROOT.IMGDIR.$tp['src'];
         $tp['thumb'] = URLROOT.THUMBDIR.$tp['thumb'];
     }
-    $g = 'Filename: <a href="'.URLROOT.IMGDIR.$tp['src'].'" target="_blank">'.$tp['f'].'</a>-('.$tp['size'].' B) <small>Thumbnail</small><br>
+    $g = 'Filename: <a href="'.$tp['src'].'" target="_blank">'.$tp['f'].'</a>-('.$tp['size'].' B) <small>Thumbnail</small><br>
 <a href="'.$tp['src'].'" target="_blank">';
     if($tp['thread'] == 0)
         $g .= '<img style="margin-bottom:10px;" src="'.$tp['thumb'].'" border=0 align=left hspace=20 alt="'.$tp['size'].' B"></a>';
@@ -433,14 +433,13 @@ function old_style_thread($thread, $full) {
         //print_r($replies);
     }
 
-    $txt .= '<a id="p'.$tp['id'].'">';
 	if(!$full && count($tp['replies']) > SHOWREPLIES) {
         $om = (count($tp['replies']) - SHOWREPLIES) . ' repl'.((count($tp['replies']) - SHOWREPLIES) == 1 ? 'y' : 'ies').' ommitted. Click Reply to read all.';
         } else {
 		$om = "";
 	}
 
-    $txt .= '<div class="thre">';
+    $txt .= '<div class="thre" id="p'.$tp['id'].'">';
 
 	if($tp['src'] != ""){
 		$txt .= old_style_image($tp);
@@ -455,6 +454,8 @@ function old_style_thread($thread, $full) {
         if(mb_strlen($tp['comment']) > POSTTRUNCATE){
             $mc = markup(mb_substr($tp['comment'], 0, POSTTRUNCATE))."．．．";
             $tm = "Post truncated. Click Reply to read it all.";
+        } else {
+            $mc = markup($tp['comment']);
         }
     }
     $txt .= ' [<a href="'.URLROOT.THREADDIR.$tp['id'].'.html" class="hsbn">Reply</a>]<blockquote>'.$mc.'</blockquote><font color="#707070">'.$tm.$om.'</font><br>';
@@ -464,8 +465,7 @@ function old_style_thread($thread, $full) {
     }
     if(count($tp['replies']) > 0){
         foreach($replies as $reply){
-            $txt .= '<a id="p'.$reply['id'].'">';
-            $txt .= '<table border=0><tr><td class=rts>…</td><td class=rtd>';
+            $txt .= '<table border=0 id="p'.$reply['id'].'"><tr><td class=rts>…</td><td class=rtd>';
             $txt .= old_style_text($reply);
             $txt .= "<br>";
             if($reply['src'] != ""){
@@ -525,7 +525,7 @@ function postform($op){
     
         $r .= '<div id="pb"><table><tr><td class="fl"><b>Name</b></td><td><input type=text name=name size="28"></td></tr>
 <tr><td class="fl"><b>E-mail</b></td><td><input type=text name=email size="28"></td></tr>
-<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="スレッドを立てる" onClick="ptfk(0)"></td></tr>
+<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="返信する"></td></tr>
 <tr><td class="fl"><b>Comment</b></td><td><textarea id="com" name=comment cols="48" rows="4" id="ftxa"></textarea></td></tr>
 <tr><td class="fl"><b>添付File</b></td><td><input type=file name=img size="35">';
         if(ALLOWNOIMAGEOP){
@@ -807,7 +807,7 @@ if(isset($_GET['mode'])){
             
             $t .= '<div id="pb"><table><tr><td class="fl"><b>Name</b></td><td><input type=text name=name size="28"></td></tr>
 <tr><td class="fl"><b>E-mail</b></td><td><input type=text name=email size="28"></td></tr>
-<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="スレッドを立てる" onClick="ptfk(0)"></td></tr>
+<tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="スレッドを立てる"></td></tr>
 <tr><td class="fl"><b>Comment</b></td><td><textarea id="com" name=comment cols="48" rows="4" id="ftxa"></textarea></td></tr>
 <tr><td class="fl"><b>添付File</b></td><td><input type=file name=img size="35">';
             if(ALLOWNOIMAGEOP){
