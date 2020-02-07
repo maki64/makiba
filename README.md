@@ -7,7 +7,7 @@ A futaba-style imageboard script that doesn't require a database.
 tripcode!q/7 - helping out with the software
 Pineapple - helping out aswell
 qa-tari - several fixes suggested on /qa/
-
+sukiyaki - stole half of his code and made it better :^)
 ~~~~~~~~~~~~~~~~~~~
 
 # Admin pannel Installation
