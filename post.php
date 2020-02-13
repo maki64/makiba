@@ -69,7 +69,7 @@ a:visited {
 </div>
 </form>
 <?php
-  
+
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 'On');
@@ -97,6 +97,7 @@ define("MOVEUPLOAD", "The file could not be uploaded."); // error if the file co
 define("ALLOWEDTYPES", array("image/jpeg", "image/png", "image/gif", IMAGETYPE_GIF, IMAGETYPE_PNG, IMAGETYPE_JPEG)); // allowed types
 define("BADFILESFILE", "bad"); // where the hashes of banned files are stored
 define("BANFILE", "bans"); // where banned IPs are stored
+define("WORDFILTERFILE", "wordfilters"); // where wordfilters are stored
 define("MAXWIDTH", 3000); // max image width
 define("MAXHEIGHT", 3000); // max image height
 define("MAXFSIZE", 2000000); // max file size
@@ -134,6 +135,7 @@ define("ERR_FILESIZE", "Your file's size is too large. Please try reducing the q
 define("ERR_DIM", "Your file's dimensions are too large. Please try resizing it.");
 define("ERR_NEEDIMAGE", "Sorry, you need an image to post on this board.");
 define("ERR_MUSTCOMMENT", "You must add a comment. Try typing something.");
+define("ERR_BANNEDWORD", "Your comment contained a word or phrase that is not permitted. Please edit your post and try again.");
 define("ERR_TOOLONG", "Your comment is too long. Try and summarise it.");
 define("ERR_FULLTHREAD", "The thread you have replied to has reached the maximum number of posts.");
 define("ERR_ADMINOPONLY", "Sorry, only the administrator can create new threads at the moment.");
@@ -156,11 +158,11 @@ function mktripcode($pw){
     $pw=str_replace("'",'&#39;',$pw);
     $pw=str_replace('<','&lt;',$pw);
     $pw=str_replace('>','&gt;',$pw);
-    
+
     $salt=substr($pw.'H.',1,2);
     $salt=preg_replace('/[^.\/0-9:;<=>?@A-Z\[\\\]\^_`a-z]/','.',$salt);
     $salt=strtr($salt,':;<=>?@[\]^_`','ABCDEFGabcdef');
-    
+
     $trip=substr(crypt($pw,$salt),-10);
     return $trip;
 }
@@ -244,7 +246,7 @@ function num_posts($parent){
     foreach(getposts() as $p){
         if($p['thread'] == $parent)
             $c++;
-    } 
+    }
    return $c;
 }
 
@@ -305,14 +307,14 @@ function markup($c){
             "quotelink_cb",
             $ca);
         $ca = preg_replace('/^(&gt;.*)/i', '<span class="implying">$1</span>', $ca);
-        
+
         if(FORMATCODE){
             /* double quotes for inline code */
             $ca = preg_replace("/``(.*)''/i", '<code class="code">$1</code>', $ca);
         }
     }
     $c = implode("\n", $g);
-   
+
     $c = preg_replace("/\n/s", "<br>", $c);
 
     /* this is experimental, and will double space your code
@@ -348,7 +350,7 @@ function delete_post($id){
             array_push($a, $post);
         }
     }
-    writeposts($a); 
+    writeposts($a);
 }
 
 function delete_imageonly($id){
@@ -361,7 +363,7 @@ function delete_imageonly($id){
         }
         array_push($a, $post);
     }
-    writeposts($a); 
+    writeposts($a);
 }
 
 function isBanned($ip) {
@@ -429,9 +431,9 @@ function old_style_thread($thread, $full) {
                 }
                 $sortArray[$key][] = $value;
             }
-        } 
-        
-        array_multisort($sortArray['id'],SORT_ASC,$replies); 
+        }
+
+        array_multisort($sortArray['id'],SORT_ASC,$replies);
         //print_r($replies);
     }
 
@@ -446,7 +448,7 @@ function old_style_thread($thread, $full) {
 	if($tp['src'] != ""){
 		$txt .= old_style_image($tp);
 	}
-    
+
     $txt .= old_style_text($tp);
     $tm = '';
     $mc = '';
@@ -524,7 +526,7 @@ function postform($op){
         $r .= '<form action="'.URLROOT.SCRIPTNAME.'?mode=post" method="POST" enctype="multipart/form-data">';
 
         $r .= '<input type="hidden" name="thread" value="'.$op.'">';
-    
+
         $r .= '<div id="pb"><table><tr><td class="fl"><b>Name</b></td><td><input type=text name=name size="28"></td></tr>
 <tr><td class="fl"><b>E-mail</b></td><td><input type=text name=email size="28"></td></tr>
 <tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="'.($op>0?'返信する':'スレッドを立てる').'"></td></tr>
@@ -570,7 +572,7 @@ return false;
 <font color="#800000" size=5>
 <b><SPAN>'.TITLE.'</SPAN></b></font>
 <hr width="90%" size=1>';
-    
+
     if($op > 0){
         if(REPLYBOX_TOP){
             $r .= postform($op);
@@ -609,7 +611,7 @@ function all_posts_struct($posts){
             }
             $sortArray[$key][] = $value;
         }
-    } 
+    }
 
     if(SORTBUMP)
         array_multisort($sortArray['bumptime'],SORT_DESC,$op_posts);
@@ -777,6 +779,15 @@ function safen($s){
     return $s;
 }
 
+function ban_ip($ip) {
+    $bans = fopen(BANFILE, "a");
+    $result = fwrite($bans, $ip."\n");
+    fclose($bans);
+    return $result !== FALSE;
+}
+
+
+
 if(isset($_GET['mode'])){
 	$mode = trim($_GET['mode']);
 
@@ -806,7 +817,7 @@ if(isset($_GET['mode'])){
             $t .= '<form action="'.URLROOT.SCRIPTNAME.'?mode=post" method="POST" enctype="multipart/form-data">';
 
             $t .= '<input type="hidden" name="thread" value="0">';
-            
+
             $t .= '<div id="pb"><table><tr><td class="fl"><b>Name</b></td><td><input type=text name=name size="28"></td></tr>
 <tr><td class="fl"><b>E-mail</b></td><td><input type=text name=email size="28"></td></tr>
 <tr><td class="fl"><b>Subject</b></td><td><input type=text name=subject size="35"><input type=submit value="スレッドを立てる"></td></tr>
@@ -846,7 +857,7 @@ if(isset($_GET['mode'])){
                     if(!empty($x)){
                         if((strcmp($x['key'],clean($_POST['deletekey'])) == 0)
                            || (isset($_COOKIE['sess_id']) && validate($_COOKIE['sess_id']))){
-                            
+
                             if(isset($_POST['imageonly']) && strcmp($_POST['imageonly'], "y") == 0) {
                                 delete_imageonly($x['id']);
                                 array_push($img_deleted, $x['id']);
@@ -871,7 +882,7 @@ if(isset($_GET['mode'])){
         infopage("Deleted posts", "The following posts have been deleted: " . implode(", ", $deleted) . "<br>The following posts have their image deleted: " . implode(", ", $img_deleted) . "<br>The following posts have not been deleted: " . implode(", ", $undeleted));
     }
 
-    
+
 	if($mode == "post"){
         if(LOCKED){
             abort_error("This board is locked.");
@@ -937,7 +948,7 @@ if(isset($_GET['mode'])){
             if(isbanned($pinf['ip'])) { abort_error(ERR_BANNED); }
             if(num_posts($tidi) > MAXREPLIES) { abort_error(ERR_FULLTHREAD); }
         }
-        
+
 		$data = array();
 		if(isset($_FILES['img']) && (!isset($_POST['noimage']) || ($_POST['noimage'] != "y")) && is_uploaded_file($_FILES['img']['tmp_name'])){
             //print isset($_POST['noimage']);
@@ -948,7 +959,7 @@ if(isset($_GET['mode'])){
 			}
 
 			$fi = finfo_open(FILEINFO_MIME_TYPE);
-			$pinf['size'] = filesize($loc.".tmp");		
+			$pinf['size'] = filesize($loc.".tmp");
 
             if(!$ad){
                 if(!in_array(finfo_file($fi, $loc.".tmp"), ALLOWEDTYPES)
@@ -956,12 +967,12 @@ if(isset($_GET['mode'])){
                    || !in_array(exif_imagetype($loc.".tmp"), ALLOWEDTYPES)) {
                     abort_error(ERR_BADTYPE);
                 }
-                
+
                 if(in_array(hash_file("sha256", $loc.".tmp"), getbadfiles())) {
                     abort_error(ERR_BADFILE);
                 }
             }
-			
+
 			$type = mime_content_type($loc.".tmp");
 
 			if($pinf['size'] > MAXFSIZE && !$ad){
@@ -988,12 +999,12 @@ if(isset($_GET['mode'])){
                         $s = imagecreatefrompng($loc.".tmp");
                         break;
                     }
-                    
+
                     $th = floor($height * ($mw/$width));
                     $v = imagecreatetruecolor($mw, $th);
                     imagecopyresized($v, $s, 0, 0, 0, 0, $mw, $th, $width, $height);
-				
-                    switch($type) { 	
+
+                    switch($type) {
                     case "image/jpeg":
                         imagejpeg($v, THUMBDIR.$loc.".jpg", 100);
                         rename($loc.".tmp", IMGDIR.$loc.".jpg");
@@ -1017,16 +1028,16 @@ if(isset($_GET['mode'])){
                     /* imagick is avail */
                     $image = $loc.".tmp";
                     $im = new Imagick();
-                    
+
                     /*** ping the image ***/
                     $im->pingImage($image);
-                    
+
                     /*** read the image into the object ***/
                     $im->readImage( $image );
-                    
+
                     /*** thumbnail the image ***/
                     $im->thumbnailImage( $mw, $mw, TRUE, FALSE );
-                    
+
                     /*** Write the thumbnail to disk ***/
                     if(strcmp($type, "image/jpeg") == 0){
                         $im->writeImage(THUMBDIR.$loc.".jpg" );
@@ -1043,7 +1054,7 @@ if(isset($_GET['mode'])){
                     elseif(strcmp($type, "image/png") == 0){
                         $im->writeImage(THUMBDIR.$loc.".png" );
                         rename($loc.".tmp", IMGDIR.$loc.".png");
-                                               
+
                         $pinf['thumb'] = $loc.".png";
                         $pinf['src'] =  $loc.".png";
                     }
@@ -1054,7 +1065,7 @@ if(isset($_GET['mode'])){
 				$pinf['thumb'] = THUMBICONS[$type];
 			}
 			$pinf['width'] = $width;
-			$pinf['height'] = $height;	
+			$pinf['height'] = $height;
 			$pinf['hash'] = hash_file("sha256", IMGDIR.$pinf['src']);
 		} else {
             if(!isset($_FILES['img']) && !ALLOWNOIMAGEOP && !$ad){
@@ -1068,7 +1079,7 @@ if(isset($_GET['mode'])){
                 abort_error(ERR_TOOLONG);
             }
         }
-        
+
 		if(isset($_POST['email'])){
 			$pinf['email'] = clean($_POST['email']);
 		} else {
@@ -1086,6 +1097,20 @@ if(isset($_GET['mode'])){
 				$pinf['comment'] = "nc";
 			}
 		}
+        $filters = explode("\n", file_get_contents(WORDFILTERFILE));
+        foreach ($filters as $filter_line) {
+            $filter = explode("\t", $filter_line);
+            if (preg_match($filter[0], $pinf['comment']) === 1) {
+                if ($filter[1] === "BAN") {
+                    ban_ip($pinf['ip']);
+                    abort_error(ERR_BANNEDWORD);
+                } else if ($filter[1] === "DROP") {
+                    abort_error(ERR_BANNEDWORD);
+                } else {
+                    preg_replace($filter[0], $filter[1], $pinf['comment']);
+                }
+            }
+        }
 		if(isset($_POST['subject'])){
 			$pinf['subject'] = clean($_POST['subject']);
 		} else {
@@ -1104,7 +1129,7 @@ if(isset($_GET['mode'])){
                 setcookie("dk",$_POST['key'],time()+(60*60*24*7));
                 $_COOKIES["dk"] = $_POST['key'];
             }
-        
+
 		/* remember to clean the key when comparing when a user wants to delete a post */
 		$pinf['subject'] = clean($_POST['subject']);
 		$pinf['thread'] = $op;
@@ -1114,14 +1139,14 @@ if(isset($_GET['mode'])){
         $pinf['bumptime'] = $pinf['time'];
         $pinf['admin'] = $ad;
 
-        
+
         if(num_posts(0) > MAXTHREADS) {
             delete_last_thread();
         }
-        
-        
+
+
 		insertpost($pinf);
-        
+
         if($pinf['email'] == "noko"){
 	    if($op>0) {
                 echo '<meta http-equiv="refresh" content="2; url='.URLROOT.THREADDIR.$op.'.html#p'.$pinf['id'].'">';
