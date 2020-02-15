@@ -29,11 +29,9 @@ a:visited {
     color: #789922;
 }
 
-.fl {
-    background-color: #ea8;
-    width:4.5em;
+.orangetext {
+    color: #FF8C00;
 }
-
 #info {
     font-size:small;
     max-width:75%;
