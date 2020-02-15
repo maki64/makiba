@@ -10,7 +10,7 @@ qa-tari - several fixes suggested on /qa/
 sukiyaki - made his code better :^)
 ~~~~~~~~~~~~~~~~~~~
 
-# Admin pannel Installation
+# Admin panel Installation
 ~~~~~~~~~~~~
 -> sudo apt install php-mbstring
 make sure php-mbstring is installed
