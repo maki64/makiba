@@ -32,6 +32,10 @@ a:visited {
 .orangetext {
     color: #FF8C00;
 }
+.fl {
+    background-color: #ea8;
+    width: 4.5em;
+}
 #info {
     font-size:small;
     max-width:75%;
