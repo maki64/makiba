@@ -239,7 +239,8 @@ function markup($c){
             "/(&gt;&gt;\d+)/",
             "quotelink_cb",
             $ca);
-        $ca = preg_replace('/^(&gt;.*)/i', '<span class="implying">$1</span>', $ca);
+	$ca = preg_replace('/^(&gt;.*)/i', '<span class="implying">$1</span>', $ca);
+	$ca = preg_replace('/^(&lt;.*)/i', '<span class="orangetext">$1</span>', $ca);
 
         if(FORMATCODE){
             /* double quotes for inline code */
