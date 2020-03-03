@@ -7,8 +7,7 @@ A futaba-style imageboard script that doesn't require a database.
 tripcode!q/7 - helping out with the software
 Pineapple - helping out aswell
 qa-tari - several fixes suggested on /qa/
-sukiyaki - made his code better :^)
-~~~~~~~~~~~~~~~~~~~
+original code is iyra's sukiyaki, available here: https://github.com/iyra/sukiyaki
 
 # Admin panel Installation
 ~~~~~~~~~~~~
